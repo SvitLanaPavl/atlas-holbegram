@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1045928586014",
+    "project_id": "holbegram-17718",
+    "storage_bucket": "holbegram-17718.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1045928586014:android:4f2caea4ee1405047ef70f",
+        "android_client_info": {
+          "package_name": "com.svitlana.holbegram"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCDHUiI2KlX0UcZ69EDQ_96mDY9OII0AIU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

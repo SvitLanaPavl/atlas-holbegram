@@ -1,0 +1,4 @@
+{
+  "max_open_files": 1000000,
+  "statefile_interval": 3600
+}
