@@ -3,6 +3,10 @@ apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 apply plugin: 'com.google.gms.google-services'
 
+project.ext.vectoricons = [
+    iconFontNames: [ 'MaterialIcons.ttf', 'FontAwesome.ttf' ]
+]
+
 /**
  * This is the configuration block to customize your React Native Android app.
  * By default you don't need to apply any configuration, just uncomment the lines you need.
@@ -123,4 +127,7 @@ dependencies {
     // Add the specific Firebase SDKs you want to use
     implementation 'com.google.firebase:firebase-analytics'
     // Add other Firebase SDKs as needed
+
+    implementation project(':react-native-vector-icons')
 }
+
