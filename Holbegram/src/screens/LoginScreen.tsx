@@ -7,7 +7,7 @@ import logo from '../assets/atlas-school.png';
 type RootStackParamList = {
   Login: undefined;
   Register: undefined;
-  Home: undefined;
+  MainApp: undefined;
 };
 
 type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
@@ -26,7 +26,7 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
   const handleLogin = () => {
     auth().signInWithEmailAndPassword(email, password)
     .then(() => {
-      navigation.navigate('Home');
+      navigation.navigate('MainApp');
     })
     .catch(error => setErrorMessage(error.message));
   };
