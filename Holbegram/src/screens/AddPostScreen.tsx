@@ -5,7 +5,6 @@ import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { StackNavigationProp } from '@react-navigation/stack';
-import Header from './Header';
 
 type RootStackParamList = {
   Home: undefined;
@@ -66,7 +65,6 @@ const AddPostScreen: React.FC<Props> = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Header title="Add Post" onLogout={handleLogout} />
       <Button title="Pick an Image" onPress={selectImage} />
       {imageUri && <Image source={{ uri: imageUri }} style={styles.image} />}
       <TextInput

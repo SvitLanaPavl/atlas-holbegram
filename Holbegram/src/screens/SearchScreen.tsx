@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { View, TextInput, FlatList, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
-import Header from './Header';
 import { StackNavigationProp } from '@react-navigation/stack';
 
 type RootStackParamList = {
@@ -81,9 +80,6 @@ const SearchScreen: React.FC<Props> = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      {/* Reusable Header */}
-      <Header title="Search" onLogout={handleLogout} />
-
       {/* Search Input */}
       <TextInput
         style={styles.input}

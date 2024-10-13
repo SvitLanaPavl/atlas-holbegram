@@ -3,7 +3,6 @@ import { View, FlatList, Image, StyleSheet, TouchableOpacity, Alert } from 'reac
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import Header from './Header';
 import { StackNavigationProp } from '@react-navigation/stack';
 
 interface Post {
@@ -75,7 +74,6 @@ const FavoritesScreen: React.FC<Props> = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Header title="Favorites" onLogout={handleLogout} />
       <FlatList
         data={favoritePosts}
         keyExtractor={(item) => item.id}
@@ -91,7 +89,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 10,
     paddingTop: 20,
-    backgroundColor: '#00003c',
+    backgroundColor: '#f5f5f5',
   },
   list: {
     paddingBottom: 20,

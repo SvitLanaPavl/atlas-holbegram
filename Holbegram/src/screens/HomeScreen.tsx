@@ -40,15 +40,6 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
     fetchPosts();
   }, []);
 
-  const handleLogout = async () => {
-    try {
-      await auth().signOut();
-      navigation.replace('Login');
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
   const handleDoubleTap = (postId: string) => {
     Alert.alert('Added to favorites!');
   };
@@ -70,12 +61,6 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Home Feed</Text>
-        <TouchableOpacity onPress={handleLogout}>
-          <Icon name="logout" size={30} color="#1ed2af" />
-        </TouchableOpacity>
-      </View>
       <FlatList
         data={posts}
         keyExtractor={(item) => item.id}
@@ -91,13 +76,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 10,
     paddingTop: 20,
-    backgroundColor: '#00003c',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
+    backgroundColor: '#f5f5f5',
   },
   title: {
     fontSize: 24,
