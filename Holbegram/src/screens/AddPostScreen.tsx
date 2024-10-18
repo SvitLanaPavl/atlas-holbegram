@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Image, StyleSheet, TouchableOpacity, Alert, FlatList } from 'react-native';
+import { View, Text, TextInput, Image, StyleSheet, TouchableOpacity, Alert, ScrollView } from 'react-native';
 import storage from '@react-native-firebase/storage';
-import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -18,18 +17,25 @@ type Props = {
   navigation: AddPostScreenNavigationProp;
 };
 
-// Use require to load local images
+// Use `require()` to load local images from assets
 const decorativeImages = [
   { id: '1', src: require('../assets/bird.jpeg') },
   { id: '2', src: require('../assets/flower.jpeg') },
   { id: '3', src: require('../assets/bloom.jpeg') },
+  { id: '4', src: require('../assets/forest.jpg') },
+  { id: '5', src: require('../assets/mountain.jpg') },
+  { id: '6', src: require('../assets/lake.jpg') },
+  { id: '7', src: require('../assets/butterfly.jpeg') },
+  { id: '8', src: require('../assets/waterfall.jpeg') },
+  { id: '9', src: require('../assets/lavender.jpeg') },
 ];
 
 const AddPostScreen: React.FC<Props> = ({ navigation }) => {
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [caption, setCaption] = useState('');
 
-  const selectImage = () => {
+  // Function to select image from the user's local device
+  const selectImageFromDevice = () => {
     launchImageLibrary({ mediaType: 'photo' }, (response) => {
       if (response.assets && response.assets.length > 0) {
         setImageUri(response.assets[0].uri || null);
@@ -39,8 +45,18 @@ const AddPostScreen: React.FC<Props> = ({ navigation }) => {
     });
   };
 
+  // Function to handle when the user clicks on a placeholder image
+  const selectImageFromPlaceholder = (src: any) => {
+    const resolvedUri = Image.resolveAssetSource(src).uri;
+    setImageUri(resolvedUri); // Resolve the local image path and set it as the image URI
+  };
+
+  // Function to upload post to Firebase
   const uploadPost = async () => {
-    if (!imageUri) return;
+    if (!imageUri) {
+      Alert.alert('Error', 'Please select an image first!');
+      return;
+    }
 
     const filename = imageUri.substring(imageUri.lastIndexOf('/') + 1);
     const task = storage().ref(filename).putFile(imageUri);
@@ -56,38 +72,37 @@ const AddPostScreen: React.FC<Props> = ({ navigation }) => {
       Alert.alert('Success', 'Post uploaded successfully!');
       navigation.navigate('Home');
     } catch (e) {
-      console.error(e);
+      console.error('Error uploading post: ', e);
       Alert.alert('Error', 'Failed to upload post');
     }
   };
 
+  // Function to reset the selected image and caption
   const resetFields = () => {
     setImageUri(null);
     setCaption('');
   };
 
   return (
-    <View style={styles.container}>
-      {/* Show image picker button if no image is selected, otherwise show the selected image */}
+    <ScrollView contentContainerStyle={styles.container}>
+      {/* If image is selected, display it larger, otherwise show the placeholder images */}
       {imageUri ? (
-        <Image source={{ uri: imageUri }} style={styles.image} />
+        <Image source={{ uri: imageUri }} style={styles.selectedImage} />
       ) : (
-        <>
-          <TouchableOpacity style={styles.pickImageButton} onPress={selectImage}>
-            <Text style={styles.pickImageText}>Pick an Image</Text>
-          </TouchableOpacity>
-          <FlatList
-            data={decorativeImages}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <Image source={item.src} style={styles.reelImage} />
-            )}
-            style={styles.reelContainer}
-          />
-        </>
+        <View style={styles.placeholderContainer}>
+          {/* Render images in rows */}
+          {decorativeImages.map((item, index) => (
+            <TouchableOpacity key={item.id} onPress={() => selectImageFromPlaceholder(item.src)} style={styles.placeholderWrapper}>
+              <Image source={item.src} style={styles.placeholderImage} />
+            </TouchableOpacity>
+          ))}
+        </View>
       )}
+
+      {/* Button to select image from local device */}
+      <TouchableOpacity style={styles.pickImageButton} onPress={selectImageFromDevice}>
+        <Text style={styles.pickImageText}>Pick Image from Device</Text>
+      </TouchableOpacity>
 
       {/* Caption input */}
       <TextInput
@@ -107,21 +122,37 @@ const AddPostScreen: React.FC<Props> = ({ navigation }) => {
       <TouchableOpacity onPress={resetFields}>
         <Text style={styles.resetText}>Reset</Text>
       </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     justifyContent: 'center',
     padding: 20,
     backgroundColor: '#f5f5f5',
   },
-  image: {
+  selectedImage: {
     width: '100%',
-    height: 250,
+    height: 300,
     marginBottom: 20,
+    borderRadius: 10,
+  },
+  placeholderContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  placeholderWrapper: {
+    width: '31%', // Each image takes 30% of the row
+    marginBottom: 10,
+  },
+  placeholderImage: {
+    width: '100%', // Full width of the container (30% of the row)
+    height: 100,
+    borderRadius: 10,
   },
   pickImageButton: {
     backgroundColor: 'transparent',
@@ -136,15 +167,6 @@ const styles = StyleSheet.create({
   pickImageText: {
     color: '#1ed2af',
     fontSize: 16,
-  },
-  reelContainer: {
-    marginBottom: 20,
-  },
-  reelImage: {
-    width: 100,
-    height: 100,
-    marginHorizontal: 10,
-    borderRadius: 10,
   },
   input: {
     borderWidth: 1,

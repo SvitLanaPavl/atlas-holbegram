@@ -24,11 +24,16 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
   const [errorMessage, setErrorMessage] = useState('');
 
   const handleRegister = () => {
-    auth().createUserWithEmailAndPassword(email, password)
-    .then(() => {
-      navigation.navigate('Login');
-    })
-    .catch(error => setErrorMessage(error.message));
+    auth()
+      .createUserWithEmailAndPassword(email, password)
+      .then(() => {
+        console.log("User created successfully!");
+        navigation.navigate('Login');
+      })
+      .catch((error) => {
+        setErrorMessage(error.message);
+        console.error('Registration Error:', error);
+      });
   };
 
   return (

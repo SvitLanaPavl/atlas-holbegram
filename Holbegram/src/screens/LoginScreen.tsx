@@ -28,7 +28,10 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
     .then(() => {
       navigation.navigate('MainApp');
     })
-    .catch(error => setErrorMessage(error.message));
+    .catch(error => {
+      setErrorMessage(error.message);
+      console.log(error);
+  });
   };
 
   return (
