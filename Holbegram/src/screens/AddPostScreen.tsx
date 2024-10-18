@@ -28,6 +28,15 @@ const decorativeImages = [
   { id: '7', src: require('../assets/butterfly.jpeg') },
   { id: '8', src: require('../assets/waterfall.jpeg') },
   { id: '9', src: require('../assets/lavender.jpeg') },
+  { id: '10', src: require('../assets/bird.jpeg') },
+  { id: '11', src: require('../assets/flower.jpeg') },
+  { id: '12', src: require('../assets/bloom.jpeg') },
+  { id: '13', src: require('../assets/forest.jpg') },
+  { id: '14', src: require('../assets/mountain.jpg') },
+  { id: '15', src: require('../assets/lake.jpg') },
+  { id: '16', src: require('../assets/butterfly.jpeg') },
+  { id: '17', src: require('../assets/waterfall.jpeg') },
+  { id: '18', src: require('../assets/lavender.jpeg') },
 ];
 
 const AddPostScreen: React.FC<Props> = ({ navigation }) => {
@@ -84,27 +93,34 @@ const AddPostScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <View style={styles.container}>
       {/* If image is selected, display it larger, otherwise show the placeholder images */}
       {imageUri ? (
         <Image source={{ uri: imageUri }} style={styles.selectedImage} />
       ) : (
-        <View style={styles.placeholderContainer}>
+        <ScrollView
+          horizontal={false}
+          style={styles.imageScrollView} // Scrollable view for images
+          contentContainerStyle={styles.imageScrollContainer}
+        >
           {/* Render images in rows */}
           {decorativeImages.map((item, index) => (
             <TouchableOpacity key={item.id} onPress={() => selectImageFromPlaceholder(item.src)} style={styles.placeholderWrapper}>
               <Image source={item.src} style={styles.placeholderImage} />
             </TouchableOpacity>
           ))}
-        </View>
+        </ScrollView>
       )}
 
       {/* Button to select image from local device */}
+      {!imageUri &&(
       <TouchableOpacity style={styles.pickImageButton} onPress={selectImageFromDevice}>
         <Text style={styles.pickImageText}>Pick Image from Device</Text>
       </TouchableOpacity>
-
+      )}
       {/* Caption input */}
+      {imageUri && (
+        <>
       <TextInput
         style={styles.input}
         placeholder="Add a caption"
@@ -112,17 +128,16 @@ const AddPostScreen: React.FC<Props> = ({ navigation }) => {
         value={caption}
         onChangeText={setCaption}
       />
-
-      {/* Save button */}
       <TouchableOpacity style={styles.uploadButton} onPress={uploadPost}>
         <Text style={styles.uploadButtonText}>Save</Text>
       </TouchableOpacity>
 
-      {/* Reset button */}
       <TouchableOpacity onPress={resetFields}>
         <Text style={styles.resetText}>Reset</Text>
       </TouchableOpacity>
-    </ScrollView>
+      </>
+      )}
+    </View>
   );
 };
 
@@ -130,7 +145,7 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     justifyContent: 'center',
-    padding: 20,
+    padding: 10,
     backgroundColor: '#f5f5f5',
   },
   selectedImage: {
@@ -139,11 +154,13 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     borderRadius: 10,
   },
-  placeholderContainer: {
+  imageScrollView: {
+    maxHeight: 610,
+  },
+  imageScrollContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    marginBottom: 10,
   },
   placeholderWrapper: {
     width: '31%', // Each image takes 30% of the row
@@ -155,17 +172,18 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   pickImageButton: {
-    backgroundColor: 'transparent',
+    backgroundColor: '#1ed2af',
     borderColor: '#1ed2af',
     borderWidth: 1,
-    padding: 15,
+    padding: 12,
     borderRadius: 5,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 10,
+    marginTop: 10,
   },
   pickImageText: {
-    color: '#1ed2af',
+    color: '#fff',
     fontSize: 16,
   },
   input: {

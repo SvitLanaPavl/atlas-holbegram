@@ -21,6 +21,7 @@
     "@types/react-navigation": "^3.0.8",
     "react": "18.3.1",
     "react-native": "0.75.4",
+    "react-native-fs": "^2.19.0",
     "react-native-gesture-handler": "^2.20.0",
     "react-native-image-picker": "^7.1.2",
     "react-native-reanimated": "^3.15.5",
