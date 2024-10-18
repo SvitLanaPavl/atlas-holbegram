@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'reac
 import auth from '@react-native-firebase/auth';
 import { StackNavigationProp } from '@react-navigation/stack';
 import logo from '../assets/atlas-school.png';
+import firestore from '@react-native-firebase/firestore';
 
 type RootStackParamList = {
   Login: undefined;
@@ -33,6 +34,27 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
       console.log(error);
   });
   };
+  const createUserProfileIfNotExists = async () => {
+    const userId = auth().currentUser?.uid;
+    const userEmail = auth().currentUser?.email;
+  
+    if (!userId) return;
+  
+    const userDocRef = firestore().collection('users').doc(userId);
+    const userDoc = await userDocRef.get();
+  
+    if (!userDoc.exists) {
+      await userDocRef.set({
+        username: userEmail,  // Default to email if no username is provided
+        email: userEmail,
+        profileImage: 'https://firebasestorage.googleapis.com/v0/b/holbegram-17718.appspot.com/o/default_profile.jpeg?alt=media&token=9f6d2b87-cf94-4e67-bf4f-f79ce3876160',
+        createdAt: firestore.FieldValue.serverTimestamp(),
+      });
+    }
+  };
+  
+  // Call this after the user logs in or signs up
+  createUserProfileIfNotExists();
 
   return (
     <View style={styles.container}>

@@ -1,53 +1,60 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Image, StyleSheet, TouchableOpacity, Alert, ScrollView } from 'react-native';
 import storage from '@react-native-firebase/storage';
 import firestore from '@react-native-firebase/firestore';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { StackNavigationProp } from '@react-navigation/stack';
+import auth from '@react-native-firebase/auth';
 
+// Define navigation prop types
 type RootStackParamList = {
   Home: undefined;
+  "Home Feed": undefined;
   AddPost: undefined;
   Login: undefined;
 };
-
 type AddPostScreenNavigationProp = StackNavigationProp<RootStackParamList, 'AddPost'>;
+type Props = { navigation: AddPostScreenNavigationProp };
 
-type Props = {
-  navigation: AddPostScreenNavigationProp;
+// Function to fetch images from Firebase Storage
+const fetchDecorativeImages = async () => {
+  try {
+    const folderPath = 'decorativeImages/';
+    const listResult = await storage().ref(folderPath).listAll();
+    const imageUrls = await Promise.all(
+      listResult.items.map(async (itemRef) => {
+        const url = await itemRef.getDownloadURL();
+        return { id: itemRef.name, url };
+      })
+    );
+    return imageUrls;
+  } catch (error) {
+    console.error('Error fetching images:', error);
+    return [];
+  }
 };
-
-// Use `require()` to load local images from assets
-const decorativeImages = [
-  { id: '1', src: require('../assets/bird.jpeg') },
-  { id: '2', src: require('../assets/flower.jpeg') },
-  { id: '3', src: require('../assets/bloom.jpeg') },
-  { id: '4', src: require('../assets/forest.jpg') },
-  { id: '5', src: require('../assets/mountain.jpg') },
-  { id: '6', src: require('../assets/lake.jpg') },
-  { id: '7', src: require('../assets/butterfly.jpeg') },
-  { id: '8', src: require('../assets/waterfall.jpeg') },
-  { id: '9', src: require('../assets/lavender.jpeg') },
-  { id: '10', src: require('../assets/bird.jpeg') },
-  { id: '11', src: require('../assets/flower.jpeg') },
-  { id: '12', src: require('../assets/bloom.jpeg') },
-  { id: '13', src: require('../assets/forest.jpg') },
-  { id: '14', src: require('../assets/mountain.jpg') },
-  { id: '15', src: require('../assets/lake.jpg') },
-  { id: '16', src: require('../assets/butterfly.jpeg') },
-  { id: '17', src: require('../assets/waterfall.jpeg') },
-  { id: '18', src: require('../assets/lavender.jpeg') },
-];
 
 const AddPostScreen: React.FC<Props> = ({ navigation }) => {
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [caption, setCaption] = useState('');
+  const [imageFromFirebase, setImageFromFirebase] = useState(false); // Add flag to track image source (Firebase or device)
+  const [decorativeImages, setDecorativeImages] = useState<any[]>([]);
+
+  // Fetch decorative images from Firebase when the component mounts
+  useEffect(() => {
+    const loadImages = async () => {
+      const images = await fetchDecorativeImages();
+      setDecorativeImages(images);
+    };
+    loadImages();
+  }, []);
 
   // Function to select image from the user's local device
   const selectImageFromDevice = () => {
     launchImageLibrary({ mediaType: 'photo' }, (response) => {
       if (response.assets && response.assets.length > 0) {
         setImageUri(response.assets[0].uri || null);
+        setImageFromFirebase(false); // Set flag to false when selecting from the device
       } else {
         setImageUri(null);
       }
@@ -55,9 +62,9 @@ const AddPostScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   // Function to handle when the user clicks on a placeholder image
-  const selectImageFromPlaceholder = (src: any) => {
-    const resolvedUri = Image.resolveAssetSource(src).uri;
-    setImageUri(resolvedUri); // Resolve the local image path and set it as the image URI
+  const selectImageFromPlaceholder = (url: string) => {
+    setImageUri(url); // Set selected image URI from Firebase Storage
+    setImageFromFirebase(true); // Set flag to true for Firebase images
   };
 
   // Function to upload post to Firebase
@@ -66,25 +73,60 @@ const AddPostScreen: React.FC<Props> = ({ navigation }) => {
       Alert.alert('Error', 'Please select an image first!');
       return;
     }
-
-    const filename = imageUri.substring(imageUri.lastIndexOf('/') + 1);
-    const task = storage().ref(filename).putFile(imageUri);
-
+  
+    const userId = auth().currentUser?.uid; // Get the current user's ID
+    if (!userId) {
+      Alert.alert('Error', 'User is not logged in.');
+      return;
+    }
+  
+    // Fetch user data (username and profile image) from Firestore
+    const userDoc = await firestore().collection('users').doc(userId).get();
+    const userData = userDoc.data();
+    const username = userData?.username || 'User';
+    const profileImage = userData?.profileImage || 'https://firebasestorage.googleapis.com/v0/b/holbegram-17718.appspot.com/o/default_profile.jpeg?alt=media&token=9f6d2b87-cf94-4e67-bf4f-f79ce3876160';
+  
+    let imageUrl = imageUri;
+  
+    // If the image is from the local device, upload it to Firebase Storage first
+    if (!imageFromFirebase) {
+      const filename = imageUri.substring(imageUri.lastIndexOf('/') + 1);
+      const task = storage().ref(`userPosts/${filename}`).putFile(imageUri);
+  
+      try {
+        await task;
+        imageUrl = await storage().ref(`userPosts/${filename}`).getDownloadURL();
+      } catch (e) {
+        console.error('Error uploading post: ', e);
+        Alert.alert('Error', 'Failed to upload post');
+        return;
+      }
+    }
+  
+    // Now that we have the image URL (either from Firebase or uploaded), save the post
     try {
-      await task;
-      const url = await storage().ref(filename).getDownloadURL();
       await firestore().collection('posts').add({
-        imageUrl: url,
+        imageUrl: imageUrl,
         caption: caption,
+        userId: userId,         // Associate the post with the user's ID
+        username: username,     // Include the username in the post
+        profileImage: profileImage, // Include the user's profile image
         createdAt: firestore.FieldValue.serverTimestamp(),
       });
       Alert.alert('Success', 'Post uploaded successfully!');
-      navigation.navigate('Home');
+      
+      // Reset the form fields after successful upload
+      resetFields();
+  
+      // Navigate to Home Feed
+      navigation.navigate('Home Feed');
     } catch (e) {
-      console.error('Error uploading post: ', e);
-      Alert.alert('Error', 'Failed to upload post');
+      console.error('Error saving post to Firestore: ', e);
+      Alert.alert('Error', 'Failed to save post');
     }
   };
+  
+
 
   // Function to reset the selected image and caption
   const resetFields = () => {
@@ -103,39 +145,39 @@ const AddPostScreen: React.FC<Props> = ({ navigation }) => {
           style={styles.imageScrollView} // Scrollable view for images
           contentContainerStyle={styles.imageScrollContainer}
         >
-          {/* Render images in rows */}
-          {decorativeImages.map((item, index) => (
-            <TouchableOpacity key={item.id} onPress={() => selectImageFromPlaceholder(item.src)} style={styles.placeholderWrapper}>
-              <Image source={item.src} style={styles.placeholderImage} />
+          {/* Render decorative images fetched from Firebase */}
+          {decorativeImages.map((item) => (
+            <TouchableOpacity key={item.id} onPress={() => selectImageFromPlaceholder(item.url)} style={styles.placeholderWrapper}>
+              <Image source={{ uri: item.url }} style={styles.placeholderImage} />
             </TouchableOpacity>
           ))}
         </ScrollView>
       )}
 
       {/* Button to select image from local device */}
-      {!imageUri &&(
-      <TouchableOpacity style={styles.pickImageButton} onPress={selectImageFromDevice}>
-        <Text style={styles.pickImageText}>Pick Image from Device</Text>
-      </TouchableOpacity>
+      {!imageUri && (
+        <TouchableOpacity style={styles.pickImageButton} onPress={selectImageFromDevice}>
+          <Text style={styles.pickImageText}>Pick Image from Device</Text>
+        </TouchableOpacity>
       )}
+
       {/* Caption input */}
       {imageUri && (
         <>
-      <TextInput
-        style={styles.input}
-        placeholder="Add a caption"
-        placeholderTextColor="#aaa"
-        value={caption}
-        onChangeText={setCaption}
-      />
-      <TouchableOpacity style={styles.uploadButton} onPress={uploadPost}>
-        <Text style={styles.uploadButtonText}>Save</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity onPress={resetFields}>
-        <Text style={styles.resetText}>Reset</Text>
-      </TouchableOpacity>
-      </>
+          <TextInput
+            style={styles.input}
+            placeholder="Add a caption"
+            placeholderTextColor="#aaa"
+            value={caption}
+            onChangeText={setCaption}
+          />
+          <TouchableOpacity style={styles.uploadButton} onPress={uploadPost}>
+            <Text style={styles.uploadButtonText}>Save</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={resetFields}>
+            <Text style={styles.resetText}>Reset</Text>
+          </TouchableOpacity>
+        </>
       )}
     </View>
   );
@@ -163,11 +205,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   placeholderWrapper: {
-    width: '31%', // Each image takes 30% of the row
+    width: '31%',
     marginBottom: 10,
   },
   placeholderImage: {
-    width: '100%', // Full width of the container (30% of the row)
+    width: '100%',
     height: 100,
     borderRadius: 10,
   },
