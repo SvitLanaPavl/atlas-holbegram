@@ -64,11 +64,11 @@ function MyTabs() {
         tabBarInactiveTintColor: 'gray',
         tabBarStyle: {
           backgroundColor: '#fff',
-          elevation: 20,
+          elevation: 100,
           shadowColor: '#000',
-          shadowOffset: { width: 0, height: 5 },
-          shadowOpacity: 0.2,
-          shadowRadius: 10,
+          shadowOffset: { width: 100, height: 100 },
+          shadowOpacity: 1,
+          shadowRadius: 100,
           borderTopWidth: 0,
         },
         headerTitle: () => (

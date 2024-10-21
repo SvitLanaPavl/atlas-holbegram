@@ -109,12 +109,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 10,
-    backgroundColor: '#f5f5f5', // Gray background
+    backgroundColor: '#f5f5f5',
   },
   input: {
-    height: 40,
+    height: 45,
     borderWidth: 1,
-    borderColor: 'rgba(30, 210, 175, 0.3)', // Teal border
+    borderColor: 'rgba(30, 210, 175, 0.3)',
     paddingHorizontal: 10,
     borderRadius: 5,
     color: '#00003c',
