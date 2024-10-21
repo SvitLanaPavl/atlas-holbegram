@@ -6,7 +6,7 @@ import SearchScreen from './SearchScreen';
 import AddPostScreen from './AddPostScreen';
 import FavoritesScreen from './FavoritesScreen';
 import ProfileScreen from './ProfileScreen';
-import { TouchableOpacity } from 'react-native';
+import { TouchableOpacity, Image } from 'react-native';
 import auth from '@react-native-firebase/auth';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 
@@ -35,6 +35,9 @@ function MyTabs() {
       console.error('Error logging out:', error);
     }
   };
+
+  // Logo to be used in the header
+  const logo = require('../assets/atlas_transparent.png');
 
   return (
     <Tab.Navigator
@@ -68,6 +71,13 @@ function MyTabs() {
           shadowRadius: 10,
           borderTopWidth: 0,
         },
+        headerTitle: () => (
+          <Image
+            source={logo}
+            style={{ width: 90, height: 40 }}
+            resizeMode="contain"
+          />
+        ),
         headerRight: () => (
           <TouchableOpacity onPress={handleLogout} style={{ paddingRight: 15 }}>
             <Icon name="logout" size={24} color="#1ed2af" />

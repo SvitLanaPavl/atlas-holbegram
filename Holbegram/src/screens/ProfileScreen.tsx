@@ -92,29 +92,53 @@ const ProfileScreen = () => {
 
   const updateDisplayName = async () => {
     const userId = auth().currentUser?.uid;
-
+    
     if (!userId || !displayName.trim()) {
       Alert.alert('Error', 'Display name cannot be empty.');
       return;
     }
-
+  
     try {
-      await firestore().collection('users').doc(userId).update({
+      const batch = firestore().batch();
+  
+      // Update the username in the 'users' collection
+      const userRef = firestore().collection('users').doc(userId);
+      batch.update(userRef, {
         username: displayName,
       });
-
+  
+      // Get all posts by the current user
+      const postsSnapshot = await firestore()
+        .collection('posts')
+        .where('userId', '==', userId)
+        .get();
+  
+      // Update username in all posts
+      postsSnapshot.forEach((postDoc) => {
+        const postRef = firestore().collection('posts').doc(postDoc.id);
+        batch.update(postRef, {
+          username: displayName,  // This updates the username in the post
+        });
+      });
+  
+      // Commit the batch update
+      await batch.commit();
+  
+      // Update local state
       setUserProfile((prevProfile) => ({
         ...prevProfile,
         username: displayName,
       }));
-
-      Alert.alert('Success', 'Display name updated!');
+  
+      Alert.alert('Success', 'Display name and all posts updated!');
       setIsEditing(false); // Exit editing mode after success
     } catch (error) {
       console.error('Error updating display name:', error);
       Alert.alert('Error', 'Failed to update display name.');
     }
   };
+  
+  
 
   const renderPost = ({ item }: { item: any }) => (
     <TouchableOpacity onPress={() => Alert.alert('Caption', item.caption)}>
