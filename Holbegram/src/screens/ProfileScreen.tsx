@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TextInput, Image, StyleSheet, TouchableOpacity, Alert, Keyboard, TouchableWithoutFeedback } from 'react-native';
+import { View, Text, FlatList, TextInput, Image, StyleSheet, TouchableOpacity, Alert, Keyboard, TouchableWithoutFeedback, Dimensions } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
 import auth from '@react-native-firebase/auth';
@@ -14,6 +14,9 @@ const ProfileScreen = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [displayName, setDisplayName] = useState(''); // Initial value is empty
 
+  const screenWidth = Dimensions.get('window').width;
+  const imageSize = screenWidth / 4 - 10;  // Calculate image size based on screen width (4 images per row)
+
   useEffect(() => {
     const fetchUserProfile = async () => {
       const userId = auth().currentUser?.uid;
@@ -24,7 +27,6 @@ const ProfileScreen = () => {
         const userDoc = await firestore().collection('users').doc(userId).get();
         const userData = userDoc.data();
   
-        // If user data is present, set the profile and displayName.
         if (userData) {
           const fetchedUsername = userData.username || userEmail || 'User';
           setUserProfile({
@@ -32,19 +34,24 @@ const ProfileScreen = () => {
             profileImage: userData.profileImage || 'https://firebasestorage.googleapis.com/v0/b/holbegram-17718.appspot.com/o/default_profile.jpeg?alt=media&token=9f6d2b87-cf94-4e67-bf4f-f79ce3876160',
           });
   
-          // Initialize displayName here, so it reflects the username or email
           setDisplayName(fetchedUsername);
         } else {
-          // If no user data is found, still set the displayName to email
           setDisplayName(userEmail || 'User');
         }
-  
-        const postList: any[] = [];
-        const snapshot = await firestore().collection('posts').where('userId', '==', userId).get();
-        snapshot.forEach(doc => {
-          postList.push({ id: doc.id, imageUrl: doc.data().imageUrl, caption: doc.data().caption });
-        });
-        setPosts(postList);
+
+        // Real-time listener for posts
+        const unsubscribePosts = firestore()
+          .collection('posts')
+          .where('userId', '==', userId)
+          .onSnapshot((snapshot) => {
+            const postList: any[] = [];
+            snapshot.forEach(doc => {
+              postList.push({ id: doc.id, imageUrl: doc.data().imageUrl, caption: doc.data().caption });
+            });
+            setPosts(postList);  // Update state with new posts
+          });
+
+        return () => unsubscribePosts(); // Unsubscribe when component unmounts
       } catch (error) {
         console.error(error);
       }
@@ -52,7 +59,6 @@ const ProfileScreen = () => {
   
     fetchUserProfile();
   }, []);
-  
   
 
   const changeProfileImage = () => {
@@ -71,12 +77,10 @@ const ProfileScreen = () => {
         await task;
         const downloadUrl = await storage().ref(`profileImages/${filename}`).getDownloadURL();
 
-        // Update profile image URL in Firestore
         await firestore().collection('users').doc(userId).update({
           profileImage: downloadUrl,
         });
 
-        // Update state
         setUserProfile((prevProfile) => ({
           ...prevProfile,
           profileImage: downloadUrl,
@@ -101,48 +105,42 @@ const ProfileScreen = () => {
     try {
       const batch = firestore().batch();
   
-      // Update the username in the 'users' collection
       const userRef = firestore().collection('users').doc(userId);
       batch.update(userRef, {
         username: displayName,
       });
   
-      // Get all posts by the current user
       const postsSnapshot = await firestore()
         .collection('posts')
         .where('userId', '==', userId)
         .get();
   
-      // Update username in all posts
       postsSnapshot.forEach((postDoc) => {
         const postRef = firestore().collection('posts').doc(postDoc.id);
         batch.update(postRef, {
-          username: displayName,  // This updates the username in the post
+          username: displayName,
         });
       });
   
-      // Commit the batch update
       await batch.commit();
   
-      // Update local state
       setUserProfile((prevProfile) => ({
         ...prevProfile,
         username: displayName,
       }));
   
       Alert.alert('Success', 'Display name and all posts updated!');
-      setIsEditing(false); // Exit editing mode after success
+      setIsEditing(false);
     } catch (error) {
       console.error('Error updating display name:', error);
       Alert.alert('Error', 'Failed to update display name.');
     }
   };
   
-  
 
   const renderPost = ({ item }: { item: any }) => (
     <TouchableOpacity onPress={() => Alert.alert('Caption', item.caption)}>
-      <Image source={{ uri: item.imageUrl }} style={styles.gridImage} />
+      <Image source={{ uri: item.imageUrl }} style={[styles.gridImage, { width: imageSize, height: imageSize }]} />
     </TouchableOpacity>
   );
 
@@ -158,7 +156,6 @@ const ProfileScreen = () => {
               style={styles.profileImage}
             />
           </TouchableOpacity>
-          {/* Username Display */}
           {isEditing ? (
             <View style={styles.editSection}>
               <TextInput
@@ -178,14 +175,15 @@ const ProfileScreen = () => {
           )}
         </View>
 
-        {/* Posts */}
         <FlatList
           data={posts}
           keyExtractor={(item) => item.id}
-          numColumns={3}
+          numColumns={4}
+          key={4}
           renderItem={renderPost}
           contentContainerStyle={styles.gridContainer}
         />
+
       </View>
     </TouchableWithoutFeedback>
   );
@@ -229,8 +227,6 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   gridImage: {
-    width: '30%',
-    height: 100,
     margin: 5,
     borderRadius: 10,
   },

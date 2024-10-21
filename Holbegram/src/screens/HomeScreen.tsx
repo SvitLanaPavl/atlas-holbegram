@@ -73,11 +73,9 @@ const HomeScreen = () => {
     if (favorites.includes(postId)) {
       // Remove from favorites and show the alert
       updatedFavorites = favorites.filter(id => id !== postId);
-      Alert.alert('The image has been removed from favorites');
     } else {
       // Add to favorites and show the alert
       updatedFavorites = [...favorites, postId];
-      Alert.alert('The image has been added to favorites');
     }
 
     setFavorites(updatedFavorites);
@@ -115,7 +113,7 @@ const HomeScreen = () => {
             <Icon
               name={isFavorite(item.id) ? 'favorite' : 'favorite-border'}  // Filled heart if favorite
               size={30}
-              color={isFavorite(item.id) ? 'red' : 'gray'}
+              color={isFavorite(item.id) ? 'red' : '#64648c'}
             />
           </TouchableOpacity>
         </View>
