@@ -39,6 +39,7 @@ const SearchScreen: React.FC<Props> = ({ navigation }) => {
         });
       });
       setUsers(userList);
+      setFilteredUsers(userList); // Initially show all users
     };
 
     fetchUsers();
@@ -47,7 +48,7 @@ const SearchScreen: React.FC<Props> = ({ navigation }) => {
   // Filter users based on search query
   useEffect(() => {
     if (searchQuery.trim() === '') {
-      setFilteredUsers([]);
+      setFilteredUsers(users); // Show all users if search query is empty
     } else {
       const filtered = users.filter(user =>
         user.username.toLowerCase().includes(searchQuery.toLowerCase())
@@ -84,18 +85,22 @@ const SearchScreen: React.FC<Props> = ({ navigation }) => {
       <TextInput
         style={styles.input}
         placeholder="Search for users..."
-        placeholderTextColor="#fff"
+        placeholderTextColor="#64648cd"
         value={searchQuery}
         onChangeText={setSearchQuery}
       />
 
-      {/* List of Users */}
-      <FlatList
-        data={filteredUsers}
-        keyExtractor={(item) => item.id}
-        renderItem={renderUser}
-        contentContainerStyle={styles.userList}
-      />
+      {/* No user found message */}
+      {filteredUsers.length === 0 && searchQuery.trim() !== '' ? (
+        <Text style={styles.noUserFound}>No user found</Text>
+      ) : (
+        <FlatList
+          data={filteredUsers}
+          keyExtractor={(item) => item.id}
+          renderItem={renderUser}
+          contentContainerStyle={styles.userList}
+        />
+      )}
     </View>
   );
 };
@@ -109,11 +114,11 @@ const styles = StyleSheet.create({
   input: {
     height: 40,
     borderWidth: 1,
-    borderColor: '#1ed2af', // Teal border
+    borderColor: 'rgba(30, 210, 175, 0.3)', // Teal border
     paddingHorizontal: 10,
     borderRadius: 5,
-    color: '#fff',
-    backgroundColor: '#00003c',
+    color: '#00003c',
+    backgroundColor: 'rgba(30, 210, 175, 0.3)',
     marginBottom: 20,
   },
   userList: {
@@ -136,6 +141,11 @@ const styles = StyleSheet.create({
   username: {
     fontSize: 16,
     color: '#000',
+  },
+  noUserFound: {
+    fontSize: 16,
+    color: '#00003c',
+    textAlign: 'center',
   },
 });
 
